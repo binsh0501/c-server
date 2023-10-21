@@ -82,6 +82,7 @@ char* makeHeader(char* version, HTTPStatus status, char* contenttype);
 void addHeader(char** header, char* key, char* value);
 void endHeader(unsigned char** header);
 char* reqTypeStr(RequestType t);
+bool cmpMethod(char* buf, int start, char* method);
 
 int main(int argc, char *argv[]) {
   int retval;
@@ -232,14 +233,41 @@ void RemoveSocketInfo(int nIndex)
   --nTotalSockets;
 }
 
+bool cmpMethod(char* buf, int start, char* method) {
+  for (int i = 0; i < strlen(method); i++)
+    if (buf[start + i] != method[i]) return false;
+  return true;
+}
+
 RequestType getReqType(char* buf, char* path) {
   for (int i = 0; i < strlen(buf); i++) {
-    if (buf[i] == 'G' && buf[i + 1] == 'E' && buf[i + 2] == 'T' && buf[i + 3] == ' ') {
+    if (cmpMethod(buf, i, "GET")) {
       for (int j = 0; buf[i + 4 + j] != ' '; j++) path[j] = buf[i + 4 + j];
       return HTTP_GET;
-    } else if (buf[i] == 'P' && buf[i + 1] == 'O' && buf[i + 2] == 'S' && buf[i + 3] == 'T' && buf[i + 4] == ' ') {
-      for (int j = 0; buf[i + 4 + j] != ' '; j++) path[j] = buf[i + 4 + j];
+    } else if (cmpMethod(buf, i, "POST")) {
+      for (int j = 0; buf[i + 5 + j] != ' '; j++) path[j] = buf[i + 5 + j];
       return HTTP_POST;
+    } else if (cmpMethod(buf, i, "HEAD")) {
+      for (int j = 0; buf[i + 5 + j] != ' '; j++) path[j] = buf[i + 5 + j];
+      return HTTP_HEAD;
+    } else if (cmpMethod(buf, i, "PUT")) {
+      for (int j = 0; buf[i + 4 + j] != ' '; j++) path[j] = buf[i + 4 + j];
+      return HTTP_PUT;
+    } else if (cmpMethod(buf, i, "DELETE")) {
+      for (int j = 0; buf[i + 7 + j] != ' '; j++) path[j] = buf[i + 7 + j];
+      return HTTP_DELETE;
+    } else if (cmpMethod(buf, i, "TRACE")) {
+      for (int j = 0; buf[i + 5 + j] != ' '; j++) path[j] = buf[i + 5 + j];
+      return HTTP_TRACE;
+    } else if (cmpMethod(buf, i, "OPTIONS")) {
+      for (int j = 0; buf[i + 7 + j] != ' '; j++) path[j] = buf[i + 7 + j];
+      return HTTP_OPTIONS;
+    } else if (cmpMethod(buf, i, "CONNECT")) {
+      for (int j = 0; buf[i + 7 + j] != ' '; j++) path[j] = buf[i + 7 + j];
+      return HTTP_CONNECT;
+    } else if (cmpMethod(buf, i, "PATCH")) {
+      for (int j = 0; buf[i + 5 + j] != ' '; j++) path[j] = buf[i + 5 + j];
+      return HTTP_PATCH;
     }
   }
   return HTTP_GET;
