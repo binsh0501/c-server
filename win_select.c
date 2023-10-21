@@ -1,6 +1,8 @@
 #define _CRT_SECURE_NO_WARNINGS
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
-
+#ifdef __linux__
+  #error This program is for Windows only.
+#endif
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include <tchar.h>
@@ -79,6 +81,7 @@ HTTPphrase getPhraseByStatus(HTTPStatus status);
 char* makeHeader(char* version, HTTPStatus status, char* contenttype);
 void addHeader(char** header, char* key, char* value);
 void endHeader(unsigned char** header);
+char* reqTypeStr(RequestType t);
 
 int main(int argc, char *argv[]) {
   int retval;
@@ -123,7 +126,7 @@ int main(int argc, char *argv[]) {
       } else {
         char addr[INET_ADDRSTRLEN];
         inet_ntop(AF_INET, &clientaddr.sin_addr, addr, sizeof(addr));
-        printf("\n[TCP Server] Client Incoming: IP Address=%s, Port Number=%d - The Guest Has Arrived!\n", addr, ntohs(clientaddr.sin_port));
+        printf("[TCP Server] Client Incoming: %s:%d - The Guest Has Arrived!\n", addr, ntohs(clientaddr.sin_port));
         if (!AddSocketInfo(client_sock)) closesocket(client_sock);
       }
       if (--nready <= 0) continue;
@@ -144,13 +147,17 @@ int main(int argc, char *argv[]) {
           ptr->buf[ptr->recvbytes] = '\0';
           char addr[INET_ADDRSTRLEN];
           inet_ntop(AF_INET, &clientaddr.sin_addr, addr, sizeof(addr));
-          printf("[TCP/%s:%d] %s\n", addr,
-            ntohs(clientaddr.sin_port), ptr->buf);
+          // printf("[TCP/%s:%d] %s\n", addr, ntohs(clientaddr.sin_port), ptr->buf);
         }
       } else if (FD_ISSET(ptr->sock, &wset)) {
         memset(ptr->path, 0, 1024);
+        addrlen = sizeof(clientaddr);
+        getpeername(ptr->sock, (struct sockaddr *)&clientaddr, &addrlen);
+        ptr->buf[ptr->recvbytes] = '\0';
+        char addr[INET_ADDRSTRLEN];
+        inet_ntop(AF_INET, &clientaddr.sin_addr, addr, sizeof(addr));
         RequestType reqtype = getReqType(ptr->buf, ptr->path);
-        printf("request: %s \n",ptr->path);
+        printf("[%s/%s]: %s \n",reqTypeStr(reqtype),addr,ptr->path);
         unsigned char* buf = NULL;
         unsigned char* header = NULL;
         if (strcmp(ptr->path, "/") == 0) {
@@ -216,7 +223,7 @@ void RemoveSocketInfo(int nIndex)
   getpeername(ptr->sock, (struct sockaddr *)&clientaddr, &addrlen);
   char addr[INET_ADDRSTRLEN];
   inet_ntop(AF_INET, &clientaddr.sin_addr, addr, sizeof(addr));
-  printf("[TCP Server] Client Disconnected: IP Address=%s, Port Number=%d\n",
+  printf("[TCP Server] Client Disconnected: %s:%d\n",
     addr, ntohs(clientaddr.sin_port));
   closesocket(ptr->sock);
   free(ptr);
@@ -236,6 +243,21 @@ RequestType getReqType(char* buf, char* path) {
     }
   }
   return HTTP_GET;
+}
+
+char* reqTypeStr(RequestType t) {
+  switch (t){
+    case HTTP_GET: return "GET";
+    case HTTP_POST: return "POST";
+    case HTTP_HEAD: return "HEAD";
+    case HTTP_PUT: return "PUT";
+    case HTTP_DELETE: return "DELETE";
+    case HTTP_TRACE: return "TRACE";
+    case HTTP_OPTIONS: return "OPTIONS";
+    case HTTP_CONNECT: return "CONNECT";
+    case HTTP_PATCH: return "PATCH";
+    default: return NULL;
+  }
 }
 
 char* makeHeader(char* version, HTTPStatus status, char* contenttype) {
