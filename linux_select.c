@@ -319,7 +319,7 @@ void addHeader(char** header, char* key, char* value) {
   size_t len = strlen(*header);
   size_t key_len = strlen(key);
   size_t value_len = strlen(value);
-  size_t new_len = len + key_len + value_len + 4; // 4 for ": ", "\r\n", and null terminator
+  size_t new_len = len + key_len + value_len + 4;
   char* new_header = realloc(*header, new_len);
   if (new_header == NULL) {
     return;
@@ -333,7 +333,7 @@ void addHeader(char** header, char* key, char* value) {
 
 void endHeader(unsigned char** header) {
   size_t len = strlen(*header);
-  size_t new_len = len + 2; // 2 for "\r\n" and null terminator
+  size_t new_len = len + 2;
   char* new_header = realloc(*header, new_len);
   if (new_header == NULL) {
     return;
