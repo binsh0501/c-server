@@ -1,5 +1,5 @@
 #ifndef __linux__
-#error This program is for Linux only!
+#error This program is for Linux only.
 #endif
 #include <sys/types.h>
 #include <sys/socket.h>
