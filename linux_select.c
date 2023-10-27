@@ -168,6 +168,7 @@ int main(int argc, char *argv[]) {
         send(ptr->sock, header, strlen(header), 0);
         retval = send(ptr->sock, buf, ((buf==NULL)?0:strlen(buf)), 0);
         free(buf);
+        free(header);
 				if (retval == SOCKET_ERROR) {
 					err_display("send()");
 					RemoveSocketInfo(i);
